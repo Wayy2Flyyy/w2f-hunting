@@ -321,6 +321,24 @@ function ProgressionService.RecordHarvest(source, carcass, legality)
                 species = carcass.species,
             }, { deferSave = true, deferSync = true })
         end
+
+        local enforcementService = Server.Services.Enforcement
+        if enforcementService and legality and legality.reasons then
+            for i = 1, #legality.reasons do
+                local reason = legality.reasons[i]
+                if reason == 'protected_species' then
+                    enforcementService.RecordViolation(source, 'protected_species', { species = carcass.species })
+                elseif reason == 'no_license' then
+                    enforcementService.RecordViolation(source, 'no_license', { species = carcass.species })
+                elseif reason == 'no_tag' then
+                    enforcementService.RecordViolation(source, 'no_tag', { species = carcass.species })
+                elseif reason == 'restricted_zone' then
+                    enforcementService.RecordViolation(source, 'restricted_zone', { zone = legality.restrictedZoneName })
+                elseif reason == 'illegal_hours' then
+                    enforcementService.RecordViolation(source, 'illegal_hours', {})
+                end
+            end
+        end
     end
 
     local speciesKey, masteryState = Mastery.AddHarvest(profile, carcass, legality)
@@ -347,6 +365,10 @@ function ProgressionService.RecordSale(source, buyerKey, preview)
             buyer = buyerKey,
             units = preview.units,
         }, { deferSave = true, deferSync = true })
+        local enforcementService = Server.Services.Enforcement
+        if enforcementService then
+            enforcementService.RecordViolation(source, 'black_market', { buyer = buyerKey, units = preview.units })
+        end
     else
         ProgressionService.AddXP(source, (xpCfg.LegalUnit or 2) * math.max(1, preview.units), 'legal_sale', { deferSave = true, deferSync = true })
         ProgressionService.AddReputation(source, 'legal', 2, nil, { deferSave = true, deferSync = true })
@@ -388,6 +410,11 @@ function ProgressionService.RecordProcessing(source, benchKey, recipeKey, craftC
             recipe = recipeKey,
         }, { deferSave = true, deferSync = true })
         ProgressionService.AddXP(source, xpCfg.IllegalBenchBonus or 18, 'illegal_bench', { deferSave = true, deferSync = true })
+        local enforcementService = Server.Services.Enforcement
+        if enforcementService then
+            local vType = (recipeKey == 'forge_tag' or recipeKey == 'falsified_tag') and 'forged_tag' or 'illegal_bait'
+            enforcementService.RecordViolation(source, vType, { recipe = recipeKey })
+        end
     elseif benchKey == 'tannery' then
         ProgressionService.AddReputation(source, 'trapper', 2, nil, { deferSave = true, deferSync = true })
     end

@@ -88,6 +88,51 @@ function PersistenceService.InitSchema()
         INDEX idx_crime_identifier(identifier),
         INDEX idx_crime_created(created_at)
     )]])
+
+    q([[CREATE TABLE IF NOT EXISTS dd_hunting_active_contracts (
+        identifier VARCHAR(80) NOT NULL,
+        contract_id VARCHAR(64) NOT NULL,
+        status VARCHAR(16) NOT NULL,
+        expires_at BIGINT NOT NULL,
+        contract_json LONGTEXT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        PRIMARY KEY(identifier, contract_id),
+        INDEX idx_active_contract_identifier(identifier)
+    )]])
+
+    q([[CREATE TABLE IF NOT EXISTS dd_hunting_contract_history (
+        id BIGINT NOT NULL AUTO_INCREMENT,
+        identifier VARCHAR(80) NOT NULL,
+        contract_id VARCHAR(64) NOT NULL,
+        status VARCHAR(16) NOT NULL,
+        contract_json LONGTEXT NOT NULL,
+        recorded_at BIGINT NOT NULL,
+        PRIMARY KEY(id),
+        INDEX idx_contract_history_identifier(identifier),
+        INDEX idx_contract_history_status(status)
+    )]])
+
+    q([[CREATE TABLE IF NOT EXISTS dd_hunting_evidence (
+        id BIGINT NOT NULL AUTO_INCREMENT,
+        identifier VARCHAR(80) NOT NULL,
+        evidence_type VARCHAR(64) NOT NULL,
+        metadata_json LONGTEXT NULL,
+        created_at BIGINT NOT NULL,
+        PRIMARY KEY(id),
+        INDEX idx_evidence_identifier(identifier)
+    )]])
+
+    q([[CREATE TABLE IF NOT EXISTS dd_hunting_enforcement_logs (
+        id BIGINT NOT NULL AUTO_INCREMENT,
+        identifier VARCHAR(80) NOT NULL,
+        event_type VARCHAR(64) NOT NULL,
+        alert_delta INT NOT NULL DEFAULT 0,
+        total_alert INT NOT NULL DEFAULT 0,
+        metadata_json LONGTEXT NULL,
+        created_at BIGINT NOT NULL,
+        PRIMARY KEY(id),
+        INDEX idx_enforcement_identifier(identifier)
+    )]])
 end
 
 function PersistenceService.LoadProfile(identifier)
@@ -207,4 +252,47 @@ function PersistenceService.InsertCrime(identifier, crimeType, heatDelta, metada
         INSERT INTO dd_hunting_ranger_crimes (identifier, crime_type, heat_delta, metadata_json, created_at)
         VALUES (?, ?, ?, ?, ?)
     ]], { identifier, crimeType, heatDelta, json.encode(metadata or {}), now() })
+end
+
+function PersistenceService.UpsertActiveContract(identifier, contractId, status, expiresAt, contract)
+    return Bridge.Database.Update([[
+        INSERT INTO dd_hunting_active_contracts (identifier, contract_id, status, expires_at, contract_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            status = VALUES(status),
+            expires_at = VALUES(expires_at),
+            contract_json = VALUES(contract_json),
+            updated_at = VALUES(updated_at)
+    ]], { identifier, contractId, status, expiresAt, json.encode(contract or {}), now() })
+end
+
+function PersistenceService.LoadActiveContracts(identifier)
+    return q('SELECT * FROM dd_hunting_active_contracts WHERE identifier = ?', { identifier }) or {}
+end
+
+function PersistenceService.DeleteActiveContract(identifier, contractId)
+    return Bridge.Database.Update('DELETE FROM dd_hunting_active_contracts WHERE identifier = ? AND contract_id = ?', {
+        identifier, contractId,
+    })
+end
+
+function PersistenceService.ArchiveContract(identifier, contractId, status, contract)
+    return Bridge.Database.Insert([[
+        INSERT INTO dd_hunting_contract_history (identifier, contract_id, status, contract_json, recorded_at)
+        VALUES (?, ?, ?, ?, ?)
+    ]], { identifier, contractId, status, json.encode(contract or {}), now() })
+end
+
+function PersistenceService.InsertEvidence(identifier, evidenceType, metadata)
+    return Bridge.Database.Insert([[
+        INSERT INTO dd_hunting_evidence (identifier, evidence_type, metadata_json, created_at)
+        VALUES (?, ?, ?, ?)
+    ]], { identifier, evidenceType, json.encode(metadata or {}), now() })
+end
+
+function PersistenceService.InsertEnforcementLog(identifier, eventType, alertDelta, totalAlert, metadata)
+    return Bridge.Database.Insert([[
+        INSERT INTO dd_hunting_enforcement_logs (identifier, event_type, alert_delta, total_alert, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ]], { identifier, eventType, alertDelta, totalAlert, json.encode(metadata or {}), now() })
 end

@@ -46,6 +46,8 @@ client_scripts {
     'client/ui/processing.lua',
     'client/ui/market.lua',
     'client/ui/progression.lua',
+    'client/ui/contracts.lua',
+    'client/ui/enforcement.lua',
 
     'client/target/animals.lua',
     'client/target/carcasses.lua',
@@ -74,6 +76,9 @@ server_scripts {
     'server/services/persistence_service.lua',
     'server/services/reputation_service.lua',
     'server/services/mastery_service.lua',
+    'server/services/evidence_service.lua',
+    'server/services/enforcement_service.lua',
+    'server/services/contracts_service.lua',
     'server/services/progression_service.lua',
     'server/services/carcass_service.lua',
     'server/services/processing_service.lua',
@@ -84,6 +89,8 @@ server_scripts {
     'server/events/processing.lua',
     'server/events/Market.lua',
     'server/events/progression.lua',
+    'server/events/contracts.lua',
+    'server/events/enforcement.lua',
 
     'server/main.lua',
 }

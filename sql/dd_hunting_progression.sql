@@ -69,3 +69,48 @@ CREATE TABLE IF NOT EXISTS dd_hunting_ranger_crimes (
     INDEX idx_crime_identifier(identifier),
     INDEX idx_crime_created(created_at)
 );
+
+CREATE TABLE IF NOT EXISTS dd_hunting_active_contracts (
+    identifier VARCHAR(80) NOT NULL,
+    contract_id VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    expires_at BIGINT NOT NULL,
+    contract_json LONGTEXT NOT NULL,
+    updated_at BIGINT NOT NULL,
+    PRIMARY KEY(identifier, contract_id),
+    INDEX idx_active_contract_identifier(identifier)
+);
+
+CREATE TABLE IF NOT EXISTS dd_hunting_contract_history (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    identifier VARCHAR(80) NOT NULL,
+    contract_id VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    contract_json LONGTEXT NOT NULL,
+    recorded_at BIGINT NOT NULL,
+    PRIMARY KEY(id),
+    INDEX idx_contract_history_identifier(identifier),
+    INDEX idx_contract_history_status(status)
+);
+
+CREATE TABLE IF NOT EXISTS dd_hunting_evidence (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    identifier VARCHAR(80) NOT NULL,
+    evidence_type VARCHAR(64) NOT NULL,
+    metadata_json LONGTEXT NULL,
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY(id),
+    INDEX idx_evidence_identifier(identifier)
+);
+
+CREATE TABLE IF NOT EXISTS dd_hunting_enforcement_logs (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    identifier VARCHAR(80) NOT NULL,
+    event_type VARCHAR(64) NOT NULL,
+    alert_delta INT NOT NULL DEFAULT 0,
+    total_alert INT NOT NULL DEFAULT 0,
+    metadata_json LONGTEXT NULL,
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY(id),
+    INDEX idx_enforcement_identifier(identifier)
+);

@@ -77,5 +77,6 @@ lib.callback.register('dd-hunting:getCarcassState', function(source)
 end)
 
 AddEventHandler('esx:playerLoaded', function(playerId)
+    Services.Contracts.LoadPlayer(playerId)
     Services.Progression.Sync(playerId)
 end)

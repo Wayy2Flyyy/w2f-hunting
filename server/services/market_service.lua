@@ -320,9 +320,27 @@ function MarketService.SellAllToBuyer(source, buyerKey)
 
     playerState.reputation = playerState.reputation + repGain
 
+    local resultInspection = nil
+
     local progressionService = Server.Services.Progression
     if progressionService and progressionService.RecordSale then
         progressionService.RecordSale(source, buyerKey, preview)
+    end
+
+    if preview.buyerType == 'illegal' then
+        local evidenceService = Server.Services.Evidence
+        if evidenceService then
+            evidenceService.RecordBySource(source, 'wildlife_evidence', { buyerKey = buyerKey, units = preview.units, total = preview.finalTotal })
+        end
+
+        local enforcementService = Server.Services.Enforcement
+        if enforcementService then
+            local context = enforcementService.RecordViolation(source, 'black_market', { buyerKey = buyerKey, units = preview.units })
+            local inspect = enforcementService.ProcessInspection(source, context)
+            if inspect and inspect.inspectionTriggered then
+                resultInspection = inspect
+            end
+        end
     end
 
     return true, {
@@ -334,6 +352,7 @@ function MarketService.SellAllToBuyer(source, buyerKey)
         saleStreak = playerState.saleStreak,
         buyerLabel = preview.buyerLabel,
         buyerType = preview.buyerType,
+        inspection = resultInspection,
     }
 end
 
