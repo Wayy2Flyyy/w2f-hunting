@@ -24,7 +24,12 @@ local function normalizeWildlifeRecord(record)
     return record
 end
 
-local function syncWildlife()
+local function normalizeCarcassRecord(record)
+    record.coords = normalizeVec3(record.coords)
+    return record
+end
+
+local function syncAll()
     if State.Runtime.syncing then
         return
     end
@@ -32,26 +37,30 @@ local function syncWildlife()
     State.Runtime.syncing = true
 
     local startedAt = GetGameTimer()
-    local records = lib.callback.await('dd-hunting:getWildlifeState', false)
+    local wildlife = lib.callback.await('dd-hunting:getWildlifeState', false)
+    local carcasses = lib.callback.await('dd-hunting:getCarcassState', false)
 
-    if type(records) == 'table' then
-        local normalized = {}
-
-        for i = 1, #records do
-            normalized[i] = normalizeWildlifeRecord(records[i])
+    if type(wildlife) == 'table' then
+        local normalizedWildlife = {}
+        for i = 1, #wildlife do
+            normalizedWildlife[i] = normalizeWildlifeRecord(wildlife[i])
         end
+        State.SetWildlife(normalizedWildlife)
+    end
 
-        State.SetWildlife(normalized)
-        State.Runtime.lastSyncAt = GetGameTimer()
-        State.Debug.lastSyncDuration = GetGameTimer() - startedAt
-
-        if WildlifeClient and WildlifeClient.Refresh then
-            WildlifeClient.Refresh()
+    if type(carcasses) == 'table' then
+        local normalizedCarcasses = {}
+        for i = 1, #carcasses do
+            normalizedCarcasses[i] = normalizeCarcassRecord(carcasses[i])
         end
+        State.SetCarcasses(normalizedCarcasses)
+    end
 
-        debugPrint(('wildlife sync complete (%s records in %sms)'):format(#normalized, State.Debug.lastSyncDuration))
-    else
-        debugPrint('wildlife sync returned no records')
+    State.Runtime.lastSyncAt = GetGameTimer()
+    State.Debug.lastSyncDuration = GetGameTimer() - startedAt
+
+    if WildlifeClient and WildlifeClient.Refresh then
+        WildlifeClient.Refresh()
     end
 
     State.Runtime.syncing = false
@@ -63,7 +72,7 @@ CreateThread(function()
     State.Runtime.booted = true
     State.Player.serverId = GetPlayerServerId(PlayerId())
 
-    syncWildlife()
+    syncAll()
 
     if WildlifeClient and WildlifeClient.Start then
         WildlifeClient.Start()
@@ -75,7 +84,7 @@ end)
 CreateThread(function()
     while true do
         Wait(State.Runtime.syncIntervalMs)
-        syncWildlife()
+        syncAll()
     end
 end)
 
@@ -85,27 +94,34 @@ RegisterNetEvent('dd-hunting:cl:syncWildlifeSnapshot', function(records)
     end
 
     local normalized = {}
-
     for i = 1, #records do
         normalized[i] = normalizeWildlifeRecord(records[i])
     end
 
     State.SetWildlife(normalized)
-    State.Runtime.lastSyncAt = GetGameTimer()
 
     if WildlifeClient and WildlifeClient.Refresh then
         WildlifeClient.Refresh()
     end
+end)
 
-    debugPrint(('event wildlife sync applied (%s records)'):format(#normalized))
+RegisterNetEvent('dd-hunting:cl:syncCarcassSnapshot', function(records)
+    if type(records) ~= 'table' then
+        return
+    end
+
+    local normalized = {}
+    for i = 1, #records do
+        normalized[i] = normalizeCarcassRecord(records[i])
+    end
+
+    State.SetCarcasses(normalized)
 end)
 
 RegisterCommand('huntstate', function()
-    local total = State.CountWildlife()
-
     lib.notify({
         title = 'Hunting',
-        description = ('Tracked wildlife records: %s'):format(total),
+        description = ('Wildlife: %s | Carcasses: %s'):format(State.CountWildlife(), State.Carcasses.total or 0),
         type = 'inform'
     })
 end, false)
