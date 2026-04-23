@@ -13,14 +13,21 @@ State.Player = {
 }
 
 State.Wildlife = {
-    active = {},      -- [id] = wildlife record
-    byZone = {},      -- [zoneName] = { [id] = true }
-    bySpecies = {},   -- [speciesKey] = { [id] = true }
+    active = {},
+    byZone = {},
+    bySpecies = {},
+    total = 0,
+}
+
+State.Carcasses = {
+    active = {},
+    byWildlifeId = {},
     total = 0,
 }
 
 State.Debug = {
     lastSyncCount = 0,
+    lastCarcassSyncCount = 0,
     lastSyncDuration = 0,
 }
 
@@ -81,28 +88,6 @@ function State.UpsertWildlife(record)
     return true
 end
 
-function State.RemoveWildlife(id)
-    local existing = State.Wildlife.active[id]
-    if not existing then
-        return false
-    end
-
-    local zoneBucket = State.Wildlife.byZone[existing.zone]
-    if zoneBucket then
-        zoneBucket[id] = nil
-    end
-
-    local speciesBucket = State.Wildlife.bySpecies[existing.species]
-    if speciesBucket then
-        speciesBucket[id] = nil
-    end
-
-    State.Wildlife.active[id] = nil
-    State.Wildlife.total = math.max(0, State.Wildlife.total - 1)
-
-    return true
-end
-
 function State.SetWildlife(records)
     State.ClearWildlife()
 
@@ -131,30 +116,55 @@ function State.CountWildlife()
     return State.Wildlife.total or 0
 end
 
-function State.CountWildlifeByZone(zoneName)
-    local bucket = State.Wildlife.byZone[zoneName]
-    if not bucket then
-        return 0
-    end
-
-    local count = 0
-    for _ in pairs(bucket) do
-        count += 1
-    end
-
-    return count
+function State.ClearCarcasses()
+    clearIndex(State.Carcasses.active)
+    clearIndex(State.Carcasses.byWildlifeId)
+    State.Carcasses.total = 0
 end
 
-function State.CountWildlifeBySpecies(speciesKey)
-    local bucket = State.Wildlife.bySpecies[speciesKey]
-    if not bucket then
-        return 0
+function State.UpsertCarcass(record)
+    if not record or not record.id then
+        return false
+    end
+
+    State.Carcasses.active[record.id] = record
+
+    if record.sourceWildlifeId then
+        State.Carcasses.byWildlifeId[record.sourceWildlifeId] = record.id
+    end
+
+    return true
+end
+
+function State.SetCarcasses(records)
+    State.ClearCarcasses()
+
+    for i = 1, #(records or {}) do
+        State.UpsertCarcass(records[i])
     end
 
     local count = 0
-    for _ in pairs(bucket) do
+    for _ in pairs(State.Carcasses.active) do
         count += 1
     end
 
-    return count
+    State.Carcasses.total = count
+    State.Debug.lastCarcassSyncCount = count
+end
+
+function State.GetCarcass(carcassId)
+    return State.Carcasses.active[carcassId]
+end
+
+function State.GetCarcassByWildlifeId(wildlifeId)
+    local carcassId = State.Carcasses.byWildlifeId[wildlifeId]
+    if not carcassId then
+        return nil
+    end
+
+    return State.Carcasses.active[carcassId]
+end
+
+function State.GetAllCarcasses()
+    return State.Carcasses.active
 end
