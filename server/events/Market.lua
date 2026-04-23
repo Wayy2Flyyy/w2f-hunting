@@ -29,6 +29,14 @@ RegisterNetEvent('dd-hunting:sv:sellAllToBuyer', function(buyerKey)
         ),
         result.buyerType == 'illegal' and 'warning' or 'success'
     )
+
+    if result.inspection and result.inspection.inspectionTriggered then
+        Bridge.ESX.ShowNotification(
+            src,
+            ('Ranger inspection: seized %s item stacks, fine $%s'):format(#(result.inspection.seized or {}), result.inspection.fine or 0),
+            'warning'
+        )
+    end
 end)
 
 RegisterNetEvent('dd-hunting:sv:purchaseFromVendor', function(vendorKey, itemName, quantity)

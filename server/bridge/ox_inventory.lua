@@ -58,3 +58,12 @@ end
 function InventoryBridge.RegisterStash(stashId, label, slots, maxWeight, owner, groups, coords)
     exports.ox_inventory:RegisterStash(stashId, label, slots, maxWeight, owner, groups, coords)
 end
+
+function InventoryBridge.GetInventoryItems(source)
+    return exports.ox_inventory:GetInventoryItems(source) or {}
+end
+
+function InventoryBridge.GetSlot(source, slot)
+    if not slot then return nil end
+    return exports.ox_inventory:GetSlot(source, slot)
+end

@@ -50,6 +50,8 @@ CreateThread(function()
     Bridge.ESX.Init()
     Bridge.Inventory.Init()
     Bridge.Database.Init()
+    Services.Persistence.InitSchema()
+    Services.Progression.Init()
 
     State.Runtime.booted = true
 
@@ -72,4 +74,9 @@ end)
 
 lib.callback.register('dd-hunting:getCarcassState', function(source)
     return Services.Carcass.Snapshot()
+end)
+
+AddEventHandler('esx:playerLoaded', function(playerId)
+    Services.Contracts.LoadPlayer(playerId)
+    Services.Progression.Sync(playerId)
 end)

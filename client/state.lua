@@ -25,6 +25,25 @@ State.Carcasses = {
     total = 0,
 }
 
+
+State.Progression = {
+    level = 1,
+    xp = 0,
+    xpToNext = 180,
+    skillPoints = 0,
+    branches = {},
+    currentTitle = 'Rookie Hunter',
+    reputation = {},
+    unlocks = {},
+    totals = {
+        hunts = 0,
+        cleanKills = 0,
+        sales = 0,
+    },
+    mastery = {},
+    updatedAt = 0,
+}
+
 State.Debug = {
     lastSyncCount = 0,
     lastCarcassSyncCount = 0,
@@ -167,4 +186,25 @@ end
 
 function State.GetAllCarcasses()
     return State.Carcasses.active
+end
+
+
+function State.SetProgression(payload)
+    if type(payload) ~= 'table' then
+        return false
+    end
+
+    State.Progression.level = math.max(1, math.floor(tonumber(payload.level) or 1))
+    State.Progression.xp = math.max(0, math.floor(tonumber(payload.xp) or 0))
+    State.Progression.xpToNext = math.max(1, math.floor(tonumber(payload.xpToNext) or 180))
+    State.Progression.skillPoints = math.max(0, math.floor(tonumber(payload.skillPoints) or 0))
+    State.Progression.branches = payload.branches or {}
+    State.Progression.currentTitle = payload.currentTitle or 'Rookie Hunter'
+    State.Progression.reputation = payload.reputation or {}
+    State.Progression.unlocks = payload.unlocks or {}
+    State.Progression.totals = payload.totals or { hunts = 0, cleanKills = 0, sales = 0 }
+    State.Progression.mastery = payload.mastery or {}
+    State.Progression.updatedAt = tonumber(payload.updatedAt) or os.time()
+
+    return true
 end

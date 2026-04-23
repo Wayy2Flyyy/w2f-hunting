@@ -16,36 +16,44 @@ State.World = {
 }
 
 State.Wildlife = {
-    active = {},        -- [entityId] = wildlife data
-    byZone = {},        -- [zoneName] = { [entityId] = true }
-    bySpecies = {},     -- [speciesKey] = { [entityId] = true }
-    pendingDespawn = {},-- [entityId] = true
+    active = {},
+    byZone = {},
+    bySpecies = {},
+    pendingDespawn = {},
     nextId = 1,
     total = 0,
 }
 
 State.Carcasses = {
-    active = {},        -- [carcassId] = carcass metadata
+    active = {},
     nextId = 1,
     total = 0,
 }
 
 State.Clues = {
-    active = {},        -- [clueId] = clue data
+    active = {},
     nextId = 1,
     total = 0,
 }
 
 State.PlacedBait = {
-    active = {},        -- [baitId] = bait instance
+    active = {},
     nextId = 1,
     total = 0,
 }
 
 State.PlacedCameras = {
-    active = {},        -- [cameraId] = trail camera instance
+    active = {},
     nextId = 1,
     total = 0,
+}
+
+State.MarketPlayers = {
+    byIdentifier = {},
+}
+
+State.ProgressionPlayers = {
+    byIdentifier = {},
 }
 
 State.Debug = {
