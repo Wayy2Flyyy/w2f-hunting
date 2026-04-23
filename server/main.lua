@@ -15,9 +15,15 @@ CreateThread(function()
 
     State.Runtime.booted = true
 
+    Services.Spawn.StartTicking()
+
     debugPrint('server foundation boot complete')
 end)
 
 lib.callback.register('dd-hunting:getWildlifeSnapshot', function(source)
     return Services.Wildlife.Snapshot()
+end)
+
+lib.callback.register('dd-hunting:getSpawnDiagnostics', function(source)
+    return Services.Spawn.GetDiagnostics()
 end)
