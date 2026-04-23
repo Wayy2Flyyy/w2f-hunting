@@ -40,6 +40,14 @@ local function pushSyncToAll()
     TriggerClientEvent('dd-hunting:cl:syncCarcassSnapshot', -1, Services.Carcass.Snapshot())
 end
 
+local function joinReasons(reasons)
+    if type(reasons) ~= 'table' or #reasons == 0 then
+        return 'none'
+    end
+
+    return table.concat(reasons, ', ')
+end
+
 RegisterNetEvent('dd-hunting:sv:reportAnimalDeath', function(wildlifeId, payload)
     local src = source
     wildlifeId = tonumber(wildlifeId)
@@ -76,9 +84,9 @@ RegisterNetEvent('dd-hunting:sv:reportAnimalDeath', function(wildlifeId, payload
         weapon = payload and payload.weapon or 'unknown',
         shotRegion = payload and payload.shotRegion or 'unknown',
         cleanKill = payload and payload.cleanKill == true,
-        qualityScore = payload and payload.qualityScore or 72,
+        dragDamage = payload and payload.dragDamage or 0,
+        vehicleDamage = payload and payload.vehicleDamage or 0,
         freshness = 100,
-        legal = true,
     })
 
     Services.Wildlife.Remove(wildlifeId, 'reported_dead')
@@ -100,6 +108,15 @@ RegisterNetEvent('dd-hunting:sv:harvestCarcass', function(carcassId)
         return
     end
 
-    Bridge.ESX.ShowNotification(src, 'Carcass harvested.', 'success')
+    if result.legality and result.legality.legal then
+        Bridge.ESX.ShowNotification(src, 'Carcass harvested legally.', 'success')
+    else
+        Bridge.ESX.ShowNotification(
+            src,
+            ('Carcass harvested as contraband. Reasons: %s'):format(joinReasons(result.legality and result.legality.reasons or {})),
+            'warning'
+        )
+    end
+
     pushSyncToAll()
 end)
