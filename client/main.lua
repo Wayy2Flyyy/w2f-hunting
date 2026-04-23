@@ -1,4 +1,5 @@
 local State = DDHunting.Client.State
+local WildlifeClient = DDHunting.Client.Systems.Wildlife
 
 local function debugPrint(msg)
     if DDHunting.Config.Main and DDHunting.Config.Main.DebugMode then
@@ -44,6 +45,10 @@ local function syncWildlife()
         State.Runtime.lastSyncAt = GetGameTimer()
         State.Debug.lastSyncDuration = GetGameTimer() - startedAt
 
+        if WildlifeClient and WildlifeClient.Refresh then
+            WildlifeClient.Refresh()
+        end
+
         debugPrint(('wildlife sync complete (%s records in %sms)'):format(#normalized, State.Debug.lastSyncDuration))
     else
         debugPrint('wildlife sync returned no records')
@@ -59,6 +64,10 @@ CreateThread(function()
     State.Player.serverId = GetPlayerServerId(PlayerId())
 
     syncWildlife()
+
+    if WildlifeClient and WildlifeClient.Start then
+        WildlifeClient.Start()
+    end
 
     debugPrint('client foundation boot complete')
 end)
@@ -83,6 +92,10 @@ RegisterNetEvent('dd-hunting:cl:syncWildlifeSnapshot', function(records)
 
     State.SetWildlife(normalized)
     State.Runtime.lastSyncAt = GetGameTimer()
+
+    if WildlifeClient and WildlifeClient.Refresh then
+        WildlifeClient.Refresh()
+    end
 
     debugPrint(('event wildlife sync applied (%s records)'):format(#normalized))
 end)
