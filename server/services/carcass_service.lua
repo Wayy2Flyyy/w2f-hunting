@@ -327,6 +327,11 @@ function CarcassService.Harvest(source, carcassId)
 
     CarcassService.Remove(carcassId, 'harvest_complete')
 
+    local progressionService = Server.Services.Progression
+    if progressionService and progressionService.RecordHarvest then
+        progressionService.RecordHarvest(source, carcass, legality)
+    end
+
     return true, {
         rewards = rewards,
         legality = legality,

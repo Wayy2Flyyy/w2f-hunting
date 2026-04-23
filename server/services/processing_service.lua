@@ -309,6 +309,11 @@ function ProcessingService.ProcessRecipe(source, benchKey, recipeKey, craftCount
         return false, 'failed_to_add_output'
     end
 
+    local progressionService = Server.Services.Progression
+    if progressionService and progressionService.RecordProcessing then
+        progressionService.RecordProcessing(source, benchKey, recipeKey, craftCount)
+    end
+
     return true, {
         benchLabel = bench.label,
         recipeLabel = recipe.label or recipeKey,
