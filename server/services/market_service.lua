@@ -320,6 +320,11 @@ function MarketService.SellAllToBuyer(source, buyerKey)
 
     playerState.reputation = playerState.reputation + repGain
 
+    local progressionService = Server.Services.Progression
+    if progressionService and progressionService.RecordSale then
+        progressionService.RecordSale(source, buyerKey, preview)
+    end
+
     return true, {
         total = preview.finalTotal,
         payoutAccount = payoutAccount,

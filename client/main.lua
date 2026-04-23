@@ -39,6 +39,7 @@ local function syncAll()
     local startedAt = GetGameTimer()
     local wildlife = lib.callback.await('dd-hunting:getWildlifeState', false)
     local carcasses = lib.callback.await('dd-hunting:getCarcassState', false)
+    local progression = lib.callback.await('dd-hunting:getProgressionState', false)
 
     if type(wildlife) == 'table' then
         local normalizedWildlife = {}
@@ -54,6 +55,10 @@ local function syncAll()
             normalizedCarcasses[i] = normalizeCarcassRecord(carcasses[i])
         end
         State.SetCarcasses(normalizedCarcasses)
+    end
+
+    if type(progression) == 'table' then
+        State.SetProgression(progression)
     end
 
     State.Runtime.lastSyncAt = GetGameTimer()
@@ -122,6 +127,21 @@ RegisterCommand('huntstate', function()
     lib.notify({
         title = 'Hunting',
         description = ('Wildlife: %s | Carcasses: %s'):format(State.CountWildlife(), State.Carcasses.total or 0),
+        type = 'inform'
+    })
+end, false)
+
+RegisterNetEvent('dd-hunting:cl:progressionUpdated', function(payload)
+    if State.SetProgression(payload) then
+        TriggerEvent('dd-hunting:cl:progressionStateUpdated', payload)
+    end
+end)
+
+RegisterCommand('huntprogress', function()
+    local p = State.Progression
+    lib.notify({
+        title = 'Hunter Progression',
+        description = ('Lv.%s | %s | XP %s/%s | SP %s'):format(p.level, p.currentTitle or 'Rookie Hunter', p.xp, p.xpToNext, p.skillPoints),
         type = 'inform'
     })
 end, false)

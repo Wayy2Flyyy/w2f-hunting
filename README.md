@@ -1,38 +1,83 @@
-# w2f-hunting
+# DD Hunting (FiveM ESX + ox)
 
-Advanced ESX + ox hunting ecosystem for FiveM.
+A modular hunting framework for ESX + ox stack with wildlife simulation, carcass harvesting, processing, markets, and persistent hunter progression.
 
-## Current scaffold
+## Current Systems
 
-This repository now contains the initial project structure for:
+- Wildlife spawn + server state sync
+- Carcass creation/harvest loop with legality resolution
+- Processing benches with metadata-aware outputs
+- Buyer/vendor market loops
+- **Persistent progression + reputation + mastery milestone (new)**
 
-- wildlife spawning and client streaming
-- carcass and harvest flow
-- kill quality evaluation
-- legality checks and tag/license handling
-- buyer/vendor market flow
-- processing benches
-- metadata-heavy ox_inventory items
+## Progression & Reputation (Milestone Complete)
 
-## Stack
+### Persistent data model
+The progression layer now persists normalized records using oxmysql:
 
-- ESX
-- ox_lib
-- ox_inventory
-- ox_target
-- oxmysql
+- `dd_hunting_profiles`
+- `dd_hunting_skill_branches`
+- `dd_hunting_species_mastery`
+- `dd_hunting_unlocks`
+- `dd_hunting_reputation`
+- `dd_hunting_ranger_crimes`
 
-## Next major milestone
+Schema migration is available at `sql/dd_hunting_progression.sql` and is also auto-created on resource start.
 
-Persistent player progression and hunter reputation.
+### Hunter progression
+- Hunter level + XP curve
+- Unspent skill points
+- Skill branches:
+  - tracker
+  - marksman
+  - butcher
+  - survivalist
+  - trophy_hunter
+  - poacher
 
-## Repo layout
+### Reputation bars
+- legal hunter rep
+- trapper rep
+- trophy rep
+- black market rep
+- ranger heat (plus crime log table)
 
-- `shared/` shared config and data registries
-- `server/` authoritative services and events
-- `client/` local streaming, targeting, UI, and interaction flow
-- `docs/` design notes for Codex continuation
+### Species mastery
+Tracked per species:
+- kills
+- clean kills
+- best trophy
+- best weight
+- variants found
+- mastery XP/rank
 
-## Notes
+### Server-authoritative gain hooks
+Progression updates are wired into:
+- carcass harvesting (quality/legality/rare/trophy)
+- market sales (legal vs illegal, bulk, trophy lines)
+- processing benches (including illegal/trophy benches)
 
-This is an actively scaffolded foundation intended to be continued in Codex. Read `AGENTS.md` before making changes.
+### Unlock foundation hooks
+Unlock flags are persisted and evaluated from:
+- level thresholds
+- reputation thresholds
+
+This lays groundwork for:
+- advanced contract tiers
+- better multipliers
+- gated high-tier gameplay loops
+
+### Minimal UI hooks
+- `/huntprogress` quick status summary
+- `/huntskills` ox_lib context overview:
+  - level + title
+  - skill points + branch ranks
+  - reputation values
+  - species mastery snapshot
+
+## Next milestone suggestion
+Build **dynamic contract and ranger response systems** using current unlock + heat foundations:
+- tiered contracts driven by unlock flags and species mastery
+- ranger patrol/event pressure scaling with heat and crime history
+- reward multipliers using branch specialization + reputation bands
+- optional lodge/trophy showroom progression tied to trophy mastery
