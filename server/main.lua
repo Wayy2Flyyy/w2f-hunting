@@ -8,6 +8,44 @@ local function debugPrint(msg)
     end
 end
 
+local function sanitizeWildlifeRecord(record)
+    return {
+        id = record.id,
+        species = record.species,
+        speciesLabel = record.speciesLabel,
+        model = record.model,
+        zone = record.zone,
+        coords = {
+            x = record.coords.x + 0.0,
+            y = record.coords.y + 0.0,
+            z = record.coords.z + 0.0,
+        },
+        heading = record.heading,
+        sex = record.sex,
+        ageClass = record.ageClass,
+        variant = record.variant,
+        spawnedAt = record.spawnedAt,
+        alive = record.alive,
+        health = record.health,
+        stress = record.stress,
+        state = record.state,
+        weight = record.weight,
+        trophyScore = record.trophyScore,
+        flags = record.flags,
+    }
+end
+
+local function getWildlifeStatePayload()
+    local payload = {}
+    local all = Services.Wildlife.GetAll()
+
+    for _, record in pairs(all) do
+        payload[#payload + 1] = sanitizeWildlifeRecord(record)
+    end
+
+    return payload
+end
+
 CreateThread(function()
     Bridge.ESX.Init()
     Bridge.Inventory.Init()
@@ -26,4 +64,8 @@ end)
 
 lib.callback.register('dd-hunting:getSpawnDiagnostics', function(source)
     return Services.Spawn.GetDiagnostics()
+end)
+
+lib.callback.register('dd-hunting:getWildlifeState', function(source)
+    return getWildlifeStatePayload()
 end)
