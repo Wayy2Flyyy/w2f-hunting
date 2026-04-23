@@ -2,6 +2,9 @@ local Server = DDHunting.Server
 local State = Server.State
 local Bridge = Server.Bridge
 
+local QualityService = Server.Services.Quality
+local LegalityService = Server.Services.Legality
+
 local CarcassService = {}
 Server.Services.Carcass = CarcassService
 
@@ -28,7 +31,7 @@ local function getSpecies(speciesKey)
     return DDHunting.Data.GetSpecies(speciesKey)
 end
 
-local function itemExistsAndCarry(source, itemName, count, metadata)
+local function canCarry(source, itemName, count, metadata)
     count = math.max(1, math.floor(tonumber(count) or 1))
     return Bridge.Inventory.CanCarryItem(source, itemName, count, metadata)
 end
@@ -58,8 +61,16 @@ end
 function CarcassService.BuildRecordFromWildlife(wildlife, payload)
     payload = payload or {}
 
+    local qualityEval = QualityService.EvaluateKill(wildlife.species, {
+        weapon = payload.weapon,
+        shotRegion = payload.shotRegion,
+        cleanKill = payload.cleanKill,
+        dragDamage = payload.dragDamage,
+        vehicleDamage = payload.vehicleDamage,
+    })
+
     local record = DDHunting.Data.ItemMetadata.CreateCarcass(wildlife.species, {
-        qualityScore = payload.qualityScore or 72,
+        qualityScore = payload.qualityScore or qualityEval.qualityScore,
         freshness = payload.freshness or 100,
         sex = wildlife.sex,
         ageClass = wildlife.ageClass,
@@ -67,12 +78,14 @@ function CarcassService.BuildRecordFromWildlife(wildlife, payload)
         weight = wildlife.weight,
         trophyScore = wildlife.trophyScore,
         zone = wildlife.zone,
-        legal = payload.legal ~= false,
+        legal = true,
         weapon = payload.weapon or 'unknown',
-        shotRegion = payload.shotRegion or 'unknown',
-        cleanKill = payload.cleanKill == true,
+        shotRegion = qualityEval.shotRegion,
+        cleanKill = qualityEval.cleanKill,
         killerServerId = payload.killerServerId,
         harvestedAt = os.time(),
+        dragDamage = payload.dragDamage or 0,
+        vehicleDamage = payload.vehicleDamage or 0,
     })
 
     record.id = State.NextCarcassId()
@@ -85,6 +98,14 @@ function CarcassService.BuildRecordFromWildlife(wildlife, payload)
         inspected = false,
         harvested = false,
     }
+
+    record.qualityScore = qualityEval.qualityScore
+    record.quality = qualityEval.quality
+    record.shotRegion = qualityEval.shotRegion
+    record.cleanKill = qualityEval.cleanKill
+    record.validWeapon = qualityEval.validWeapon
+    record.overkill = qualityEval.overkill
+    record.qualityNotes = qualityEval.notes or {}
 
     return record
 end
@@ -119,19 +140,26 @@ function CarcassService.Remove(carcassId, reason)
     return true
 end
 
-function CarcassService.BuildRewardItems(carcass)
+function CarcassService.BuildRewardItems(carcass, legality)
     local species = getSpecies(carcass.species)
     if not species then
-        return {}, 'invalid_species'
+        return nil, 'invalid_species'
     end
 
     local rewards = {}
+    local meatItem = legality.legal and 'raw_meat' or 'contraband_meat'
+    local peltItem = 'animal_pelt'
+
+    if legality.protectedSpecies then
+        peltItem = 'protected_pelt'
+    end
+
     local meatMin = species.harvest.meatMin or 1
     local meatMax = species.harvest.meatMax or meatMin
     local meatCount = math.random(meatMin, meatMax)
 
     rewards[#rewards + 1] = {
-        item = 'raw_meat',
+        item = meatItem,
         count = 1,
         metadata = DDHunting.Data.ItemMetadata.CreateMeat(carcass.species, {
             qualityScore = carcass.qualityScore,
@@ -142,7 +170,7 @@ function CarcassService.BuildRewardItems(carcass)
             weight = carcass.weight,
             trophyScore = carcass.trophyScore,
             zone = carcass.zone,
-            legal = carcass.legal,
+            legal = legality.legal,
             weapon = carcass.weapon,
             shotRegion = carcass.shotRegion,
             cleanKill = carcass.cleanKill,
@@ -154,9 +182,23 @@ function CarcassService.BuildRewardItems(carcass)
 
     if species.harvest.pelt then
         rewards[#rewards + 1] = {
-            item = 'animal_pelt',
+            item = peltItem,
             count = 1,
-            metadata = DDHunting.Data.ItemMetadata.CreatePelt(carcass.species, carcass)
+            metadata = DDHunting.Data.ItemMetadata.CreatePelt(carcass.species, {
+                qualityScore = carcass.qualityScore,
+                freshness = carcass.freshness,
+                sex = carcass.sex,
+                ageClass = carcass.ageClass,
+                variant = carcass.variant,
+                weight = carcass.weight,
+                trophyScore = carcass.trophyScore,
+                zone = carcass.zone,
+                legal = legality.legal,
+                weapon = carcass.weapon,
+                shotRegion = carcass.shotRegion,
+                cleanKill = carcass.cleanKill,
+                killerServerId = carcass.killerServerId,
+            })
         }
     end
 
@@ -172,7 +214,22 @@ function CarcassService.BuildRewardItems(carcass)
     end
 
     if partType then
-        local partMeta = DDHunting.Data.ItemMetadata.CreatePart(carcass.species, partType, carcass)
+        local partMeta = DDHunting.Data.ItemMetadata.CreatePart(carcass.species, partType, {
+            qualityScore = carcass.qualityScore,
+            freshness = carcass.freshness,
+            sex = carcass.sex,
+            ageClass = carcass.ageClass,
+            variant = carcass.variant,
+            weight = carcass.weight,
+            trophyScore = carcass.trophyScore,
+            zone = carcass.zone,
+            legal = legality.legal,
+            weapon = carcass.weapon,
+            shotRegion = carcass.shotRegion,
+            cleanKill = carcass.cleanKill,
+            killerServerId = carcass.killerServerId,
+        })
+
         if partMeta then
             rewards[#rewards + 1] = {
                 item = 'animal_part',
@@ -183,7 +240,22 @@ function CarcassService.BuildRewardItems(carcass)
     end
 
     if species.harvest.trophy and carcass.trophyScore and carcass.trophyScore > 0 then
-        local trophyMeta = DDHunting.Data.ItemMetadata.CreateTrophy(carcass.species, carcass)
+        local trophyMeta = DDHunting.Data.ItemMetadata.CreateTrophy(carcass.species, {
+            qualityScore = carcass.qualityScore,
+            freshness = carcass.freshness,
+            sex = carcass.sex,
+            ageClass = carcass.ageClass,
+            variant = carcass.variant,
+            weight = carcass.weight,
+            trophyScore = carcass.trophyScore,
+            zone = carcass.zone,
+            legal = legality.legal,
+            weapon = carcass.weapon,
+            shotRegion = carcass.shotRegion,
+            cleanKill = carcass.cleanKill,
+            killerServerId = carcass.killerServerId,
+        })
+
         if trophyMeta then
             rewards[#rewards + 1] = {
                 item = 'animal_trophy',
@@ -228,7 +300,8 @@ function CarcassService.Harvest(source, carcassId)
     end
 
     local carcass = carcassOrReason
-    local rewards, rewardErr = CarcassService.BuildRewardItems(carcass)
+    local legality = LegalityService.ResolveHarvest(source, carcass)
+    local rewards, rewardErr = CarcassService.BuildRewardItems(carcass, legality)
 
     if not rewards then
         return false, rewardErr or 'reward_build_failed'
@@ -236,7 +309,7 @@ function CarcassService.Harvest(source, carcassId)
 
     for i = 1, #rewards do
         local reward = rewards[i]
-        if not itemExistsAndCarry(source, reward.item, reward.count, reward.metadata) then
+        if not canCarry(source, reward.item, reward.count, reward.metadata) then
             return false, 'inventory_full'
         end
     end
@@ -253,7 +326,11 @@ function CarcassService.Harvest(source, carcassId)
     carcass.actionState.harvested = true
 
     CarcassService.Remove(carcassId, 'harvest_complete')
-    return true, rewards
+
+    return true, {
+        rewards = rewards,
+        legality = legality,
+    }
 end
 
 function CarcassService.Snapshot()
@@ -282,6 +359,11 @@ function CarcassService.Snapshot()
             freshnessLabel = record.freshnessLabel,
             legal = record.legal,
             harvested = record.harvested,
+            shotRegion = record.shotRegion,
+            cleanKill = record.cleanKill,
+            validWeapon = record.validWeapon,
+            overkill = record.overkill,
+            qualityNotes = record.qualityNotes,
             actionState = record.actionState,
         }
     end
