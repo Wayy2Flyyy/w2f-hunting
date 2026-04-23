@@ -69,3 +69,7 @@ end)
 lib.callback.register('dd-hunting:getWildlifeState', function(source)
     return getWildlifeStatePayload()
 end)
+
+lib.callback.register('dd-hunting:getCarcassState', function(source)
+    return Services.Carcass.Snapshot()
+end)
