@@ -4,7 +4,7 @@ local State = Client.State
 Client.Systems.Wildlife = Client.Systems.Wildlife or {}
 local WildlifeClient = Client.Systems.Wildlife
 
-local spawned = {}          -- [wildlifeId] = { ped, model, targetAdded, lastSeenAt }
+local spawned = {}
 local streaming = false
 
 local function debugPrint(msg)
@@ -35,7 +35,6 @@ local function ensureModelLoaded(model)
         local timeout = GetGameTimer() + 5000
         while not HasModelLoaded(model) do
             Wait(0)
-
             if GetGameTimer() > timeout then
                 return false
             end
@@ -66,18 +65,16 @@ local function makeAnimalAmbient(ped)
 end
 
 local function spawnLocalAnimal(record)
-    if spawned[record.id] then
+    if spawned[record.id] and spawned[record.id].ped and DoesEntityExist(spawned[record.id].ped) then
         return spawned[record.id]
     end
 
     if not ensureModelLoaded(record.model) then
-        debugPrint(('failed to load model for wildlife #%s'):format(record.id))
         return nil
     end
 
     local ped = CreatePed(28, record.model, record.coords.x, record.coords.y, record.coords.z, record.heading or 0.0, false, false)
     if not ped or ped == 0 then
-        debugPrint(('failed to create ped for wildlife #%s'):format(record.id))
         return nil
     end
 
@@ -88,6 +85,8 @@ local function spawnLocalAnimal(record)
         model = record.model,
         wildlifeId = record.id,
         targetAdded = false,
+        deathReported = false,
+        corpseMode = false,
         lastSeenAt = GetGameTimer(),
     }
 
@@ -101,7 +100,6 @@ local function spawnLocalAnimal(record)
         entry.targetAdded = true
     end
 
-    debugPrint(('spawned local animal #%s [%s]'):format(record.id, record.species))
     return entry
 end
 
@@ -117,8 +115,6 @@ local function despawnLocalAnimal(wildlifeId)
 
     safeDeleteEntity(entry.ped)
     spawned[wildlifeId] = nil
-
-    debugPrint(('despawned local animal #%s'):format(wildlifeId))
 end
 
 local function shouldRenderRecord(record, playerCoords)
@@ -126,12 +122,11 @@ local function shouldRenderRecord(record, playerCoords)
         return false
     end
 
-    local distance = #(playerCoords - record.coords)
-    return distance <= getRenderDistance()
+    return #(playerCoords - record.coords) <= getRenderDistance()
 end
 
 local function applyAnimalState(record, ped)
-    if not DoesEntityExist(ped) then
+    if not DoesEntityExist(ped) or IsEntityDead(ped) then
         return
     end
 
@@ -161,8 +156,11 @@ function WildlifeClient.GetWildlifeIdFromPed(entity)
         return nil
     end
 
-    local stateBag = Entity(entity).state
-    return stateBag and stateBag.ddHuntingWildlifeId or nil
+    return Entity(entity).state and Entity(entity).state.ddHuntingWildlifeId or nil
+end
+
+function WildlifeClient.RemoveLocalEntity(wildlifeId)
+    spawned[wildlifeId] = nil
 end
 
 function WildlifeClient.Refresh()
@@ -177,13 +175,22 @@ function WildlifeClient.Refresh()
                 applyAnimalState(record, entry.ped)
             end
         else
-            despawnLocalAnimal(wildlifeId)
+            local entry = spawned[wildlifeId]
+            if entry and entry.ped and DoesEntityExist(entry.ped) and IsEntityDead(entry.ped) then
+                entry.corpseMode = true
+            else
+                despawnLocalAnimal(wildlifeId)
+            end
         end
     end
 
-    for wildlifeId in pairs(spawned) do
+    for wildlifeId, entry in pairs(spawned) do
         if not records[wildlifeId] then
-            despawnLocalAnimal(wildlifeId)
+            if entry.ped and DoesEntityExist(entry.ped) and IsEntityDead(entry.ped) then
+                entry.corpseMode = true
+            else
+                despawnLocalAnimal(wildlifeId)
+            end
         end
     end
 end
@@ -202,8 +209,6 @@ function WildlifeClient.Start()
     streaming = true
 
     CreateThread(function()
-        debugPrint('wildlife client streamer started')
-
         while streaming do
             WildlifeClient.Refresh()
             Wait(1500)
