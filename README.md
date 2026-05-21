@@ -1,5 +1,4 @@
-# DD Hunting (FiveM ESX + ox)
-
+# w2f-hunting (reworking - qbox, qbcore, ESX)
 A modular hunting framework for ESX + ox stack with wildlife simulation, carcass harvesting, processing, markets, persistent progression, contracts, and enforcement risk loops.
 
 ## Core Systems
