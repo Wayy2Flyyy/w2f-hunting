@@ -43,7 +43,7 @@ local function weightedTier()
 end
 
 local function getIdentifier(source)
-    return Bridge.ESX.GetIdentifier(source) or ('src:%s'):format(source)
+    return Bridge.Framework.GetIdentifier(source) or ('src:%s'):format(source)
 end
 
 local function serializeContract(contract)
@@ -214,7 +214,7 @@ end
 
 local function completeContract(source, profile, contract)
     local payoutAccount = (DDHunting.Config.Contracts.Boards[contract.board] or {}).payoutAccount or 'money'
-    Bridge.ESX.AddMoney(source, payoutAccount, contract.rewards.payout, 'dd-hunting contract reward')
+    Bridge.Framework.AddMoney(source, payoutAccount, contract.rewards.payout, 'dd-hunting contract reward')
 
     local progressionService = Server.Services.Progression
     progressionService.AddXP(source, contract.rewards.xp, 'contract_complete')

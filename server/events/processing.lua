@@ -10,11 +10,11 @@ RegisterNetEvent('dd-hunting:sv:processRecipe', function(benchKey, recipeKey, cr
     local success, result = Services.Processing.ProcessRecipe(src, benchKey, recipeKey, craftCount)
 
     if not success then
-        Bridge.ESX.ShowNotification(src, ('Processing failed: %s'):format(result), 'error')
+        Bridge.Framework.ShowNotification(src, ('Processing failed: %s'):format(result), 'error')
         return
     end
 
-    Bridge.ESX.ShowNotification(
+    Bridge.Framework.ShowNotification(
         src,
         ('Processed %sx %s at %s for $%s'):format(
             result.outputCount,

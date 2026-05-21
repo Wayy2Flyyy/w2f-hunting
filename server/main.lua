@@ -47,7 +47,7 @@ local function getWildlifeStatePayload()
 end
 
 CreateThread(function()
-    Bridge.ESX.Init()
+    Bridge.Framework.Init()
     Bridge.Inventory.Init()
     Bridge.Database.Init()
     Services.Persistence.InitSchema()
@@ -76,7 +76,7 @@ lib.callback.register('dd-hunting:getCarcassState', function(source)
     return Services.Carcass.Snapshot()
 end)
 
-AddEventHandler('esx:playerLoaded', function(playerId)
+Bridge.Framework.RegisterPlayerLoaded(function(playerId)
     Services.Contracts.LoadPlayer(playerId)
     Services.Progression.Sync(playerId)
 end)

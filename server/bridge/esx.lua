@@ -1,3 +1,4 @@
+-- ESX compatibility bridge (supported target; not the default development path)
 local Bridge = DDHunting.Server.Bridge
 
 Bridge.ESX = Bridge.ESX or {}

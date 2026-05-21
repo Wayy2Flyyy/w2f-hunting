@@ -1,15 +1,17 @@
 local Config = DDHunting.Config
 
 Config.Framework = {
-    Name = 'esx', -- 'esx'
-    SharedObjectExport = 'es_extended:getSharedObject',
+    -- Active framework: qbox | qbcore | esx
+    Target = 'qbox',
+    Primary = 'qbox',
+    UseOxInventory = true,
 
     Inventory = {
         Name = 'ox_inventory',
         ImagePath = 'nui://ox_inventory/web/images',
     },
 
-    Target = {
+    InteractionTarget = {
         Name = 'ox_target',
     },
 
@@ -22,7 +24,9 @@ Config.Framework = {
     },
 
     Accounts = {
-        LegalPayout = 'money',
+        -- Qbox/QBCore: cash | bank | black_money (server-dependent)
+        -- ESX: money | black_money
+        LegalPayout = 'cash',
         IllegalPayout = 'black_money',
     },
 

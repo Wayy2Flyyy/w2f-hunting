@@ -7,7 +7,7 @@ local Evidence = Server.Services.Evidence
 local Bridge = Server.Bridge
 
 local function getIdentifier(source)
-    return Bridge.ESX.GetIdentifier(source) or ('src:%s'):format(source)
+    return Bridge.Framework.GetIdentifier(source) or ('src:%s'):format(source)
 end
 
 local lastAlertByIdentifier = {}
@@ -94,7 +94,7 @@ function EnforcementService.ProcessInspection(source, context)
     end
 
     if totalFine > 0 then
-        Bridge.ESX.RemoveMoney(source, 'money', totalFine, 'dd-hunting ranger fine')
+        Bridge.Framework.RemoveMoney(source, 'money', totalFine, 'dd-hunting ranger fine')
     end
 
     result.fine = totalFine

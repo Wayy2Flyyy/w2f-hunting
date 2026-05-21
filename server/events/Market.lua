@@ -14,11 +14,11 @@ RegisterNetEvent('dd-hunting:sv:sellAllToBuyer', function(buyerKey)
     local success, result = Services.Market.SellAllToBuyer(src, buyerKey)
 
     if not success then
-        Bridge.ESX.ShowNotification(src, ('Sale failed: %s'):format(result), 'error')
+        Bridge.Framework.ShowNotification(src, ('Sale failed: %s'):format(result), 'error')
         return
     end
 
-    Bridge.ESX.ShowNotification(
+    Bridge.Framework.ShowNotification(
         src,
         ('Sold %s units to %s for $%s. Rep: %s | Streak: %s'):format(
             result.units,
@@ -31,7 +31,7 @@ RegisterNetEvent('dd-hunting:sv:sellAllToBuyer', function(buyerKey)
     )
 
     if result.inspection and result.inspection.inspectionTriggered then
-        Bridge.ESX.ShowNotification(
+        Bridge.Framework.ShowNotification(
             src,
             ('Ranger inspection: seized %s item stacks, fine $%s'):format(#(result.inspection.seized or {}), result.inspection.fine or 0),
             'warning'
@@ -44,11 +44,11 @@ RegisterNetEvent('dd-hunting:sv:purchaseFromVendor', function(vendorKey, itemNam
     local success, result = Services.Market.PurchaseFromVendor(src, vendorKey, itemName, quantity)
 
     if not success then
-        Bridge.ESX.ShowNotification(src, ('Purchase failed: %s'):format(result), 'error')
+        Bridge.Framework.ShowNotification(src, ('Purchase failed: %s'):format(result), 'error')
         return
     end
 
-    Bridge.ESX.ShowNotification(
+    Bridge.Framework.ShowNotification(
         src,
         ('Purchased %sx %s for $%s from %s'):format(
             result.quantity,

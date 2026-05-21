@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'dd-hunting'
 author 'dd-hunting'
-description 'ESX + ox hunting framework'
+description 'Qbox/QBCore/ESX hunting framework (ox stack)'
 version '0.3.0-progression-depth'
 
 shared_scripts {
@@ -64,7 +64,10 @@ server_scripts {
     'server/init.lua',
     'server/state.lua',
 
+    'server/bridge/qbox.lua',
+    'server/bridge/qbcore.lua',
     'server/bridge/esx.lua',
+    'server/bridge/framework.lua',
     'server/bridge/ox_inventory.lua',
     'server/bridge/oxmysql.lua',
 
@@ -99,5 +102,9 @@ dependencies {
     'ox_lib',
     'oxmysql',
     'ox_inventory',
-    'es_extended',
 }
+
+-- Conditional framework dependencies (set Config.Framework.Target in shared/config/framework.lua):
+-- qbox  -> ensure qbx_core is started before dd-hunting
+-- qbcore -> ensure qb-core is started before dd-hunting
+-- esx   -> ensure es_extended is started before dd-hunting
