@@ -53,7 +53,7 @@ local function getPartMultiplier(partType)
 end
 
 local function getIdentifier(source)
-    return Bridge.ESX.GetIdentifier(source) or ('src:%s'):format(source)
+    return Bridge.Framework.GetIdentifier(source) or ('src:%s'):format(source)
 end
 
 local function getBuyerConfig(buyerKey)
@@ -285,7 +285,7 @@ function MarketService.SellAllToBuyer(source, buyerKey)
     end
 
     local payoutAccount = preview.payoutAccount or 'money'
-    local paid = Bridge.ESX.AddMoney(source, payoutAccount, preview.finalTotal, 'dd-hunting market sale')
+    local paid = Bridge.Framework.AddMoney(source, payoutAccount, preview.finalTotal, 'dd-hunting market sale')
     if not paid then
         return false, 'failed_to_pay_player'
     end
@@ -410,7 +410,7 @@ function MarketService.PurchaseFromVendor(source, vendorKey, itemName, quantity)
     end
 
     local account = vendor.purchaseAccount or 'money'
-    local removedFunds, reason = Bridge.ESX.RemoveMoney(source, account, totalPrice, 'dd-hunting market purchase')
+    local removedFunds, reason = Bridge.Framework.RemoveMoney(source, account, totalPrice, 'dd-hunting market purchase')
     if not removedFunds then
         return false, reason or 'insufficient_funds'
     end
@@ -455,13 +455,13 @@ function MarketService.PurchaseFromVendor(source, vendorKey, itemName, quantity)
     end
 
     if not Bridge.Inventory.CanCarryItem(source, itemName, quantity, metadata) then
-        Bridge.ESX.AddMoney(source, account, totalPrice, 'dd-hunting refund')
+        Bridge.Framework.AddMoney(source, account, totalPrice, 'dd-hunting refund')
         return false, 'inventory_full'
     end
 
     local added = Bridge.Inventory.AddItem(source, itemName, quantity, metadata)
     if not added then
-        Bridge.ESX.AddMoney(source, account, totalPrice, 'dd-hunting refund')
+        Bridge.Framework.AddMoney(source, account, totalPrice, 'dd-hunting refund')
         return false, 'failed_to_add_item'
     end
 

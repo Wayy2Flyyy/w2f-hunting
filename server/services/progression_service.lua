@@ -15,7 +15,7 @@ local function debugPrint(msg)
 end
 
 local function getIdentifier(source)
-    return Bridge.ESX.GetIdentifier(source) or ('src:%s'):format(source)
+    return Bridge.Framework.GetIdentifier(source) or ('src:%s'):format(source)
 end
 
 local function calcXpRequired(level)

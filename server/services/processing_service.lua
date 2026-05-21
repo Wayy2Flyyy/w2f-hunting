@@ -274,14 +274,14 @@ function ProcessingService.ProcessRecipe(source, benchKey, recipeKey, craftCount
     local fee = floor((bench.baseFee or 0) * (recipe.feeMultiplier or 1.0) * craftCount)
     local account = bench.account or 'money'
 
-    local removedFunds, fundReason = Bridge.ESX.RemoveMoney(source, account, fee, 'dd-hunting processing fee')
+    local removedFunds, fundReason = Bridge.Framework.RemoveMoney(source, account, fee, 'dd-hunting processing fee')
     if not removedFunds then
         return false, fundReason or 'insufficient_funds'
     end
 
     local aggregate, aggregateErr = collectMetadataForRecipe(source, recipe, craftCount)
     if not aggregate then
-        Bridge.ESX.AddMoney(source, account, fee, 'dd-hunting processing refund')
+        Bridge.Framework.AddMoney(source, account, fee, 'dd-hunting processing refund')
         return false, aggregateErr or 'aggregate_failed'
     end
 
@@ -289,7 +289,7 @@ function ProcessingService.ProcessRecipe(source, benchKey, recipeKey, craftCount
 
     local outputCount = (recipe.output.count or 1) * craftCount
     if not Bridge.Inventory.CanCarryItem(source, recipe.output.item, outputCount, outputMetadata) then
-        Bridge.ESX.AddMoney(source, account, fee, 'dd-hunting processing refund')
+        Bridge.Framework.AddMoney(source, account, fee, 'dd-hunting processing refund')
         return false, 'inventory_full'
     end
 
@@ -298,14 +298,14 @@ function ProcessingService.ProcessRecipe(source, benchKey, recipeKey, craftCount
         local success = Bridge.Inventory.RemoveItem(source, input.item, input.count * craftCount)
 
         if not success then
-            Bridge.ESX.AddMoney(source, account, fee, 'dd-hunting processing refund')
+            Bridge.Framework.AddMoney(source, account, fee, 'dd-hunting processing refund')
             return false, 'failed_to_remove_inputs'
         end
     end
 
     local added = Bridge.Inventory.AddItem(source, recipe.output.item, outputCount, outputMetadata)
     if not added then
-        Bridge.ESX.AddMoney(source, account, fee, 'dd-hunting processing refund')
+        Bridge.Framework.AddMoney(source, account, fee, 'dd-hunting processing refund')
         return false, 'failed_to_add_output'
     end
 

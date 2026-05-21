@@ -19,9 +19,9 @@ RegisterNetEvent('dd-hunting:sv:spendSkillPoint', function(branchKey)
     local success, result = Services.Progression.SpendSkillPoint(src, branchKey)
 
     if not success then
-        Bridge.ESX.ShowNotification(src, ('Skill upgrade failed: %s'):format(result), 'error')
+        Bridge.Framework.ShowNotification(src, ('Skill upgrade failed: %s'):format(result), 'error')
         return
     end
 
-    Bridge.ESX.ShowNotification(src, ('Upgraded %s to rank %s'):format(branchKey, result[branchKey] or 0), 'success')
+    Bridge.Framework.ShowNotification(src, ('Upgraded %s to rank %s'):format(branchKey, result[branchKey] or 0), 'success')
 end)

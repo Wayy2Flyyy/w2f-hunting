@@ -104,14 +104,14 @@ RegisterNetEvent('dd-hunting:sv:harvestCarcass', function(carcassId)
     local success, result = Services.Carcass.Harvest(src, carcassId)
 
     if not success then
-        Bridge.ESX.ShowNotification(src, ('Harvest failed: %s'):format(result), 'error')
+        Bridge.Framework.ShowNotification(src, ('Harvest failed: %s'):format(result), 'error')
         return
     end
 
     if result.legality and result.legality.legal then
-        Bridge.ESX.ShowNotification(src, 'Carcass harvested legally.', 'success')
+        Bridge.Framework.ShowNotification(src, 'Carcass harvested legally.', 'success')
     else
-        Bridge.ESX.ShowNotification(
+        Bridge.Framework.ShowNotification(
             src,
             ('Carcass harvested as contraband. Reasons: %s'):format(joinReasons(result.legality and result.legality.reasons or {})),
             'warning'
