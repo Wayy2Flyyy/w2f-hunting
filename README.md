@@ -1,6 +1,12 @@
-# DD Hunting (FiveM ESX + ox)
+# DD Hunting (FiveM — Qbox / QBCore / ESX + ox)
 
-A modular hunting framework for ESX + ox stack with wildlife simulation, carcass harvesting, processing, markets, persistent progression, contracts, and enforcement risk loops.
+A modular hunting framework for **Qbox (default)**, **QBCore**, or **ESX**, with **ox_lib**, **oxmysql**, and **ox_inventory**: wildlife simulation, carcass harvesting, processing, markets, persistent progression, contracts, and enforcement risk loops.
+
+## Framework selection
+
+Set `Config.Framework.Target` in `shared/config/framework.lua` to `qbox`, `qbcore`, or `esx`. Hard `fxmanifest` dependencies are only `ox_lib`, `oxmysql`, and `ox_inventory`. Start `qbx_core`, `qb-core`, or `es_extended` before this resource according to your target. See `CODE_REVIEW_REPORT.md` for `server.cfg` examples.
+
+Server code uses `Bridge.Framework` (player, money, notifications); inventory stays on `Bridge.Inventory` (ox_inventory).
 
 ## Core Systems
 
@@ -131,4 +137,4 @@ Build **dynamic ranger operations + advanced contract chains**:
 - multi-step contract chains with prerequisites/unlock progression
 - smarter economy modifiers based on contract reliability and evidence history
 - ranger evidence board / case management UI
-- optional jail/seizure processing pipeline with ESX job integration
+- optional jail/seizure processing pipeline with framework job integration

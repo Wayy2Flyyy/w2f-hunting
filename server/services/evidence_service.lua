@@ -14,7 +14,7 @@ function EvidenceService.Record(identifier, evidenceType, metadata)
 end
 
 function EvidenceService.RecordBySource(source, evidenceType, metadata)
-    local identifier = Server.Bridge.ESX.GetIdentifier(source) or ('src:%s'):format(source)
+    local identifier = Server.Bridge.Framework.GetIdentifier(source) or ('src:%s'):format(source)
     return EvidenceService.Record(identifier, evidenceType, metadata)
 end
 

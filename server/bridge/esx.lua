@@ -1,3 +1,5 @@
+--- ESX (es_extended) — compatibility bridge. Use Bridge.Framework from services.
+
 local Bridge = DDHunting.Server.Bridge
 
 Bridge.ESX = Bridge.ESX or {}
@@ -17,7 +19,7 @@ function ESXBridge.Init()
     end
 
     if GetResourceState('es_extended') ~= 'started' then
-        error('[dd-hunting] es_extended is not started')
+        error('[dd-hunting] Config.Framework.Target is "esx" but es_extended is not started')
     end
 
     if exports['es_extended'] and exports['es_extended'].getSharedObject then

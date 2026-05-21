@@ -1,15 +1,19 @@
 local Config = DDHunting.Config
 
+--- Framework selection: qbox (default), qbcore, or esx.
+--- Hard manifest dependencies stay on ox_* only; start the matching framework resource in server.cfg.
 Config.Framework = {
-    Name = 'esx', -- 'esx'
-    SharedObjectExport = 'es_extended:getSharedObject',
+    Target = 'qbox', -- 'qbox' | 'qbcore' | 'esx'
+    Primary = 'qbox',
+    UseOxInventory = true,
 
     Inventory = {
         Name = 'ox_inventory',
         ImagePath = 'nui://ox_inventory/web/images',
     },
 
-    Target = {
+    --- ox_target / third-party interaction layer (not the framework target string above).
+    Targeting = {
         Name = 'ox_target',
     },
 
@@ -35,3 +39,8 @@ Config.Framework = {
         AdminGroups = { 'admin', 'superadmin' },
     },
 }
+
+--- Keep legacy feature flag aligned with framework inventory setting.
+if DDHunting.Config.Main and DDHunting.Config.Main.Features then
+    DDHunting.Config.Main.Features.UseOxInventory = DDHunting.Config.Framework.UseOxInventory ~= false
+end

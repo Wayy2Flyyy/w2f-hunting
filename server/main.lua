@@ -46,8 +46,13 @@ local function getWildlifeStatePayload()
     return payload
 end
 
+local function onFrameworkPlayerLoaded(playerId)
+    Services.Contracts.LoadPlayer(playerId)
+    Services.Progression.Sync(playerId)
+end
+
 CreateThread(function()
-    Bridge.ESX.Init()
+    Bridge.Framework.Init()
     Bridge.Inventory.Init()
     Bridge.Database.Init()
     Services.Persistence.InitSchema()
@@ -77,6 +82,16 @@ lib.callback.register('dd-hunting:getCarcassState', function(source)
 end)
 
 AddEventHandler('esx:playerLoaded', function(playerId)
-    Services.Contracts.LoadPlayer(playerId)
-    Services.Progression.Sync(playerId)
+    if Bridge.Framework.GetTarget() ~= 'esx' then
+        return
+    end
+    onFrameworkPlayerLoaded(playerId)
+end)
+
+RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
+    local t = Bridge.Framework.GetTarget()
+    if t ~= 'qbox' and t ~= 'qbcore' then
+        return
+    end
+    onFrameworkPlayerLoaded(source)
 end)
